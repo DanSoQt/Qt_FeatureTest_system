@@ -1,5 +1,7 @@
 import subprocess
 import datetime
+import re
+import copy
 
 repo_features = dict()
 
@@ -214,111 +216,105 @@ repo_features['qtbase'] += features_network + features_printsupport + features_c
 ### repo_features['qtbase'] += features_widgets
 
 
-repos = [
-    'qtbase',
-    'qtxmlpatterns',
-    'qtdeclarative',
-    'qtquickcontrols',
-    'qt3d',
-    'qtactiveqt',
-    'qtandroidextras',
-    'qtwayland',
-    'qtcanvas3d',
-    'qtcharts',
-    'qtconnectivity',
-    'qtdatavis3d',
-#    'qtdoc',
-    'qtgamepad',
-    'qtgraphicaleffects',
-    'qtimageformats',
-    'qtlocation',
-    'qtmacextras',
-    'qtmultimedia',
-####    'qtnetworkauth',
-    'qtpurchasing',
-#    'qtqa',
-    'qtquickcontrols2',
-#    'qtrepotools',
-#    'qtscript',
-    'qtscxml',
-    'qtsensors',
-    'qtserialbus',
-    'qtserialport',
-    'qtspeech',
-    'qtsvg',
-#    'qttools',
-#    'qttranslations',
-    'qtvirtualkeyboard',
-#    'qtwebchannel',
-#    'qtwebsockets',
-#    'qtwebview',
-    'qtwinextras',
-    'qtx11extras',
-]
+#-------------------------------------------------------------------
+#
+# Repos and dependencies
+#
+#-------------------------------------------------------------------
+
+repo_run = subprocess.run(["git", "submodule", "foreach", "-q", r"echo $path"], stdout=subprocess.PIPE, universal_newlines=True)
+
+repo_list = repo_run.stdout.splitlines();
+
+#print(repo_list)
+#print('-------------------------------------------')
+
+tmp_repo_set = set(repo_list)
+dependencies = dict()
+
+def add_dependency(parent, child):
+    if parent in tmp_repo_set and child in tmp_repo_set:
+        dependencies.setdefault(parent, []).append(child)
 
 
+current_sub = 'UNKNOWN'
+#opt_deps = dict()
+with open('.gitmodules') as f:
+    for line in f:
+        match = re.search(r'^\[submodule "(.*)"\]', line)
+        if match:
+            # print('Submodule found: ', match.group(1))
+            current_sub = match.group(1)
+            continue
+        match = re.search(r'depends = (.*)', line)
+        if match:
+            for dep in match.group(1).split(' '):
+                add_dependency(current_sub, dep)
+            continue
+        match = re.search(r'recommends = (.*)', line)
+        if match:
+            for dep in match.group(1).split(' '):
+                add_dependency(current_sub, dep)
+            continue
 
-deps = dict()
-deps["qtdeclarative"] = ('qtxmlpatterns',)
+#print('-------------------------------------------')
 
-deps["qtmultimedia"] = ('qtdeclarative',)
-deps["qtlocation"] = ('qtdeclarative', 'qtquickcontrols', 'qtserialport',)
-deps["qtsensors"] = ('qtdeclarative', 'qtsvg',)
-####deps["qtsystems"] = ('qtdeclarative',)
-####deps["qtfeedback"] = ('qtdeclarative', 'qtmultimedia',)
-####deps["qtpim"] = ('qtdeclarative',)
-deps["qtconnectivity"] = ('qtdeclarative', 'qtandroidextras',)
-deps["qtwayland"] = ('qtdeclarative',)
-deps["qt3d"] = ('qtdeclarative', 'qtimageformats', 'qtgamepad',)
-deps["qtgraphicaleffects"] = ('qtdeclarative',)
-deps["qtquickcontrols"] = ('qtdeclarative', 'qtgraphicaleffects',)
-deps["qtserialbus"] = ('qtserialport',)
-deps["qtwinextras"] = ('qtdeclarative', 'qtmultimedia',)
-deps["qtcanvas3d"] = ('qtdeclarative',)
-deps["qtquickcontrols2"] = ('qtgraphicaleffects',)
-deps["qtpurchasing"] = ('qtandroidextras', 'qtdeclarative',)
-deps["qtcharts"] = ('qtdeclarative', 'qtmultimedia',)
-deps["qtdatavis3d"] = ('qtdeclarative', 'qtmultimedia',)
-deps["qtvirtualkeyboard"] = ('qtdeclarative', 'qtsvg', 'qtmultimedia', 'qtquickcontrols',)
-deps["qtgamepad"] = ('qtdeclarative',)
-deps["qtscxml"] = ('qtdeclarative',)
-deps["qtspeech"] = ('qtdeclarative', 'qtmultimedia',)
-####deps["qtnetworkauth"] = ('qtwebview',)
+#print(dependencies)
+#print('-------------------------------------------')
 
 
 def deps_recursive(repo):
     retval = set()
-    if not repo in deps:
+    if not repo in dependencies:
         return retval
-    for r in deps[repo]:
+    for r in dependencies[repo]:
         retval.add(r)
         retval |= deps_recursive(r)
     return retval
-    
 
-rrdeps = {x:{x} for x in repos}
 
-#print("one", rrdeps)
+rrdeps = {x:{x} for x in repo_list}
 
-for r in repos:
+
+for r in repo_list:
     dr = deps_recursive(r)
     #print("deps of", r, "=", dr)
     for rr in dr:
-        rrdeps[rr].add(r)
+        if rr in rrdeps:
+            rrdeps[rr].add(r)
 
-#for key, value in deps.items():
-#    for d in value:
-#        print("dep", key, "is", d)
-#        rdeps[d].append(key)
-#
-#
-#rdeps['qtbase'] = repos.copy()
-#rdeps['qtbase'].remove('qtbase')
-#
 
-rrdeps['qtbase'] = set(repos)
+#print(rrdeps)
+#print('-------------------------------------------')
 
-print(rrdeps)
+repos_to_sort = copy.deepcopy(rrdeps)
+sorted_repos = []
+
+for repo in repos_to_sort:
+    repos_to_sort[repo].discard(repo)
+
+
+while repos_to_sort:
+    rlist = list(repos_to_sort.keys())
+    for repo in rlist:
+        if not repos_to_sort[repo]:
+            for r in repos_to_sort:
+                repos_to_sort[r].discard(repo)
+            del repos_to_sort[repo]
+            sorted_repos.insert(0, repo)
+
+#print(sorted_repos)
+
+
+
+
+#-------------------------------------------------------------------
+#
+# Do the build tests
+#
+#-------------------------------------------------------------------
+
+
 
 configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-developer-build", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-opensource", "-confirm-license" ]
 
@@ -330,15 +326,6 @@ errfile = open('errors.txt', 'w')
 
 def timestamp():
     return '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
-
-
-#def allrdeps(repo):
-#    res = set(rdeps[repo])
-#    for r in rdeps[repo]:
-#        res |= allrdeps(r)
-#    res.add(repo)
-#    return res
-#
 
 def clean_repos(repos_to_clean):
     for r in repos_to_clean:
@@ -381,7 +368,7 @@ subprocess.run(["git", "submodule", "foreach", "git", "clean", "-fdx"], stdout=s
 
 # test all features connected to each repo
 
-for current_repo in repos:
+for current_repo in sorted_repos:
     print('hello', current_repo)
     if not current_repo in repo_features:
         continue
@@ -397,7 +384,7 @@ for current_repo in repos:
         r_to_test = repos_to_test.copy()
 
         configure_qt(test_feature)
-        for r in repos:
+        for r in sorted_repos:
             if r in r_to_test:
                 print(timestamp(), "Building", r, "with", test_feature, file=outfile, flush=True)
                 print("Building", r, "...")
