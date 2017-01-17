@@ -284,8 +284,11 @@ for r in repo_list:
             rrdeps[rr].add(r)
 
 
-#print(rrdeps)
-#print('-------------------------------------------')
+
+print('Dependencies:')
+for key in rrdeps:
+    print('  ', key, ':', rrdeps[key])
+print('-------------------------------------------')
 
 repos_to_sort = copy.deepcopy(rrdeps)
 sorted_repos = []
@@ -303,7 +306,8 @@ while repos_to_sort:
             del repos_to_sort[repo]
             sorted_repos.insert(0, repo)
 
-#print(sorted_repos)
+print('Sort order:')
+print('  ', sorted_repos)
 
 
 
