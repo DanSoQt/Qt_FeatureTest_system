@@ -6,14 +6,20 @@
 #include <QFile>
 #include <QDebug>
 #include <QDir>
+#include <QDirIterator>
 
 int main(int argc, char *argv[])
 {
+    QDir dir = QDir::current();
+    dir.setNameFilters(QStringList() << "configure.json");
+    QDirIterator it(dir, QDirIterator::Subdirectories);
+
     QStringList modules;
     QByteArray repo = QDir::current().dirName().toLocal8Bit();
-    for (int i = 1; i < argc; i++) {
-        QString fn(argv[i]);
-        QFile f(fn);
+    while (it.hasNext()) {
+        it.next();
+
+        QFile f(it.filePath());
         f.open(QIODevice::ReadOnly);
         QByteArray b = f.readAll();
 
