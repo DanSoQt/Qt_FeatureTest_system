@@ -1,0 +1,20 @@
+#! /bin/bash
+
+cd /home/paul/dev/testqt
+git pull
+git submodule update
+
+export PATH="/home/paul/bin/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+export CCACHE_NODIRECT="1"
+
+export MAKEFLAGS="-j9"
+
+echo "_________________ STARTING UP ___________________________"
+date
+
+nice python3 /home/paul/dev/ex/git/feature-test/test.py
+
+date
+
+echo "___________________ OVER AND OUT _____________________________"
