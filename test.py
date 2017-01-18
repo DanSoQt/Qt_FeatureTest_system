@@ -3,199 +3,9 @@ import datetime
 import re
 import copy
 
-repo_features = dict()
+my_json_parser = "/home/paul/dev/ex/git/feature-test/jsontest/jsontest"
 
-features_qml = (
-    '-no-feature-qml-interpreter',
-    '-no-feature-qml-network',
-)
-features_quick = (
-    '-no-feature-d3d12',
-    '-no-feature-quick-animatedimage',
-    '-no-feature-quick-canvas',
-    '-no-feature-quick-designer',
-    '-no-feature-quick-flipable',
-    '-no-feature-quick-gridview',
-    '-no-feature-quick-listview',
-    '-no-feature-quick-path',
-    '-no-feature-quick-pathview',
-    '-no-feature-quick-positioners',
-    '-no-feature-quick-shadereffect',
-    '-no-feature-quick-sprite',
-)
-
-repo_features['qtdeclarative'] = features_qml + features_quick
-
-features_xmlpatterns = (
-    '-no-feature-xml-schema',
-)
-
-repo_features['qtxmlpatterns'] = features_xmlpatterns
-
-features_widgets = (
-    '-no-feature-buttongroup',
-    '-no-feature-calendarwidget',
-    '-no-feature-colordialog',
-    '-no-feature-columnview',
-    '-no-feature-combobox',
-    '-no-feature-completer',
-    '-no-feature-contextmenu',
-    '-no-feature-datawidgetmapper',
-    '-no-feature-datetimeedit',
-    '-no-feature-dial',
-    '-no-feature-dirmodel',
-    '-no-feature-dockwidget',
-    '-no-feature-effects',
-    '-no-feature-errormessage',
-    '-no-feature-filedialog',
-    '-no-feature-filesystemmodel',
-    '-no-feature-fontcombobox',
-    '-no-feature-fontdialog',
-    '-no-feature-fscompleter',
-    '-no-feature-graphicseffect',
-    '-no-feature-graphicsview',
-    '-no-feature-groupbox',
-    '-no-feature-inputdialog',
-    '-no-feature-itemviews',
-    '-no-feature-keysequenceedit',
-    '-no-feature-lcdnumber',
-    '-no-feature-lineedit',
-    '-no-feature-listview',
-    '-no-feature-listwidget',
-    '-no-feature-mainwindow',
-    '-no-feature-mdiarea',
-    '-no-feature-menu',
-    '-no-feature-menubar',
-    '-no-feature-messagebox',
-    '-no-feature-paint_debug',
-    '-no-feature-progressbar',
-    '-no-feature-progressdialog',
-    '-no-feature-resizehandler',
-    '-no-feature-rubberband',
-    '-no-feature-scrollarea',
-    '-no-feature-scrollbar',
-    '-no-feature-sizegrip',
-    '-no-feature-slider',
-    '-no-feature-spinbox',
-    '-no-feature-splashscreen',
-    '-no-feature-splitter',
-    '-no-feature-stackedwidget',
-    '-no-feature-statusbar',
-    '-no-feature-statustip',
-    '-no-feature-style-stylesheet',
-    '-no-feature-syntaxhighlighter',
-    '-no-feature-tabbar',
-    '-no-feature-tableview',
-    '-no-feature-tablewidget',
-    '-no-feature-tabwidget',
-    '-no-feature-textbrowser',
-    '-no-feature-textedit',
-    '-no-feature-toolbar',
-    '-no-feature-toolbox',
-    '-no-feature-toolbutton',
-    '-no-feature-tooltip',
-    '-no-feature-treeview',
-    '-no-feature-treewidget',
-    '-no-feature-undocommand',
-    '-no-feature-undogroup',
-    '-no-feature-undostack',
-    '-no-feature-undoview',
-    '-no-feature-whatsthis',
-    '-no-feature-wizard',
-)
-features_network = (
-    '-no-feature-bearermanagement',
-    '-no-feature-ftp',
-    '-no-feature-http',
-    '-no-feature-localserver',
-    '-no-feature-networkdiskcache',
-    '-no-feature-networkinterface',
-    '-no-feature-networkproxy',
-    '-no-feature-socks5',
-    '-no-feature-udpsocket',
-)
-features_printsupport = (
-    '-no-feature-cups',
-    '-no-feature-printdialog',
-    '-no-feature-printer',
-    '-no-feature-printpreviewdialog',
-    '-no-feature-printpreviewwidget',
-)
-features_core = (
-    '-no-feature-animation',
-    '-no-feature-big_codecs',
-    '-no-feature-codecs',
-    '-no-feature-commandlineparser',
-    '-no-feature-datestring',
-    '-no-feature-filesystemiterator',
-    '-no-feature-filesystemwatcher',
-    '-no-feature-gestures',
-    '-no-feature-iconv',
-    '-no-feature-identityproxymodel',
-    '-no-feature-itemmodel',
-    '-no-feature-library',
-    '-no-feature-mimetype',
-    '-no-feature-process',
-    '-no-feature-properties',
-    '-no-feature-proxymodel',
-    '-no-feature-regularexpression',
-    '-no-feature-settings',
-    '-no-feature-sha3-fast',
-    '-no-feature-sharedmemory',
-    '-no-feature-sortfilterproxymodel',
-    '-no-feature-statemachine',
-    '-no-feature-stringlistmodel',
-    '-no-feature-systemsemaphore',
-    '-no-feature-temporaryfile',
-    '-no-feature-textcodec',
-    '-no-feature-textdate',
-    '-no-feature-timezone',
-    '-no-feature-topleveldomain',
-    '-no-feature-translation',
-    '-no-feature-xmlstream',
-    '-no-feature-xmlstreamreader',
-    '-no-feature-xmlstreamwriter',
-)
-features_gui = (
-    '-no-feature-accessibility',
-    '-no-feature-action',
-    '-no-feature-clipboard',
-    '-no-feature-colornames',
-    '-no-feature-cssparser',
-    '-no-feature-cursor',
-    '-no-feature-desktopservices',
-    '-no-feature-draganddrop',
-    '-no-feature-freetype',
-    '-no-feature-highdpiscaling',
-    '-no-feature-im',
-    '-no-feature-image_heuristic_mask',
-    '-no-feature-image_text',
-    '-no-feature-imageformat_bmp',
-    '-no-feature-imageformat_jpeg',
-    '-no-feature-imageformat_png',
-    '-no-feature-imageformat_ppm',
-    '-no-feature-imageformat_xbm',
-    '-no-feature-imageformat_xpm',
-    '-no-feature-imageformatplugin',
-    '-no-feature-movie',
-    '-no-feature-pdf',
-    '-no-feature-picture',
-    '-no-feature-sessionmanager',
-    '-no-feature-shortcut',
-    '-no-feature-standarditemmodel',
-    '-no-feature-systemtrayicon',
-    '-no-feature-tabletevent',
-    '-no-feature-texthtmlparser',
-    '-no-feature-textodfwriter',
-    '-no-feature-validator',
-    '-no-feature-wheelevent',
-)
-features_xml = (
-    '-no-feature-dom',
-)
-
-components_qtbase = (
-    '__baseline__',
+components_qtbase = [
     '-no-widgets',
     '-no-dbus',
     '-no-gui',
@@ -206,15 +16,20 @@ components_qtbase = (
     '-no-freetype',
     '-no-harfbuzz',
     '-no-ssl',
-    '-no-xkbcommon'
-)
+    '-no-xkbcommon',
+]
 
-repo_features['qtbase'] = components_qtbase
+repo_features = dict()
 
-repo_features['qtbase'] += features_network + features_printsupport + features_core + features_gui + features_xml
+feature_run =  subprocess.run(["git", "submodule", "foreach", my_json_parser], stderr=subprocess.PIPE, universal_newlines=True)
+exec(feature_run.stderr)
 
-### repo_features['qtbase'] += features_widgets
+repo_features['qtbase'] += components_qtbase
+repo_features['qtbase'].insert(0, '__baseline__')
 
+
+print("Features:", repo_features)
+print("------------------------------------------")
 
 #-------------------------------------------------------------------
 #
@@ -322,8 +137,8 @@ print('  ', sorted_repos)
 
 configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-developer-build", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-opensource", "-confirm-license" ]
 
-outfile = open('results.txt', 'w')
-errfile = open('errors.txt', 'w')
+outfile = open('results.txt', 'a')
+errfile = open('errors.txt', 'a')
 
 
 #./configure -recheck-all -no-pch -release -developer-build -no-warnings-are-errors -nomake examples -nomake tests -opensource -confirm-license -no-feature-wheelevent

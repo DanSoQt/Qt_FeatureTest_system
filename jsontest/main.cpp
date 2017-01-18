@@ -34,6 +34,10 @@ int main(int argc, char *argv[])
         QString moduleName = module.toString();
         if (moduleName.isEmpty())
             continue;
+#if 0
+        if (moduleName == "widgets")
+            continue; //#########
+#endif
         auto fval = obj.value("features");
 //    qDebug() << fval.isArray() << fval.isObject() << fval.isNull();
 
@@ -52,7 +56,7 @@ int main(int argc, char *argv[])
                         qDebug() << mf.constData() << "= [";
                         foundPurpose = true;
                     }
-                    qDebug().nospace() << "    '" << i.key().toLocal8Bit().constData() <<"',";
+                    qDebug().nospace() << "    '-no-feature-" << i.key().toLocal8Bit().constData() <<"',";
                 }
                 ++i;
             }
