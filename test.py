@@ -2,7 +2,9 @@ import subprocess
 import datetime
 import re
 import copy
+import sys
 
+my_output_dir = "/home/paul/dev/ex/git/feature-test/"
 my_json_parser = "/home/paul/dev/ex/git/feature-test/jsontest/jsontest"
 
 components_qtbase = [
@@ -18,6 +20,13 @@ components_qtbase = [
     '-no-ssl',
     '-no-xkbcommon',
 ]
+
+try:
+    log_suffix = '_'+sys.argv[1]
+except IndexError:
+    log_suffix = '_log'
+
+
 
 repo_features = dict()
 
@@ -137,8 +146,8 @@ print('  ', sorted_repos)
 
 configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-developer-build", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-opensource", "-confirm-license" ]
 
-outfile = open('results.txt', 'a')
-errfile = open('errors.txt', 'a')
+outfile = open(my_output_dir+'results'+log_suffix, 'a')
+errfile = open(my_output_dir+'errors'+log_suffix, 'a')
 
 
 #./configure -recheck-all -no-pch -release -developer-build -no-warnings-are-errors -nomake examples -nomake tests -opensource -confirm-license -no-feature-wheelevent

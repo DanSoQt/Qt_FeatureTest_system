@@ -1,19 +1,32 @@
 #! /bin/bash
 
+export PATH="/home/paul/bin/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 cd /home/paul/dev/testqt
+git fetch
+
+if [ $(git rev-parse @{u}) = $(git rev-parse @) ]; then
+    date
+    echo "___________________ NOTHING TO DO, EXITING _____________________"
+    exit 0
+fi
+
+
 git pull
 git submodule update
 
-export PATH="/home/paul/bin/ccache:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+git clean -fdx
 
 export CCACHE_NODIRECT="1"
 
 export MAKEFLAGS="-j9"
 
 echo "_________________ STARTING UP ___________________________"
-date
 
-nice python3 /home/paul/dev/ex/git/feature-test/test.py
+date
+git rev-parse @
+
+nice python3 /home/paul/dev/ex/git/feature-test/test.py $(git rev-parse @)
 
 date
 
