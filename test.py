@@ -179,7 +179,7 @@ def configure_qt(opt):
 def print_errors(log):
     print(log)
     for line in log.splitlines():
-        if ': error:' in line or 'Project ERROR:' in line or line.startswith('make['):
+        if 'error:' in line or 'Project ERROR:' in line or line.startswith('make['):
             print('        ', line, file=errfile, flush=True)
     print('----------------------------------------------------------\n')
 
