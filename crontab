@@ -1,2 +1,2 @@
 SHELL=/bin/bash
-47 16 * * *       /home/paul/dev/ex/git/feature-test/runscript >> /home/paul/dev/ex/git/feature-test/output 2>&1
+34 16,18,20,22 * * *       flock --verbose -n /home/paul/dev/ex/git/feature-test/ /home/paul/dev/ex/git/feature-test/runscript >> /home/paul/dev/ex/git/feature-test/output 2>&1
