@@ -4,6 +4,11 @@ import re
 import copy
 import sys
 
+from socket import gethostname
+import requests
+import time
+
+
 my_output_dir = "/home/paul/dev/ex/git/feature-test/"
 my_json_parser = "/home/paul/dev/ex/git/feature-test/jsontest/jsontest"
 
@@ -21,12 +26,39 @@ components_qtbase = [
     '-no-xkbcommon',
 ]
 
+
+
+HOSTNAME="10.213.255.45"
+
+
+timestamp_nano = time.time() * 1e9
+
+def remove_prefix(text, prefix):
+    if text.startswith(prefix):
+        return text[len(prefix):]
+    return text
+
+def submit_stats(moduleName, featureName, success, sha1):
+    hostname = gethostname()
+
+    measurement = 'build_test'
+    status = 'success' if success else 'failure'
+    result = 0 if success else 1;
+    prettyFeatureName = remove_prefix(featureName, '-no-feature-')
+    tags = ('platform=Ubuntu_16.04', 'module='+moduleName, 'status='+status, 'feature='+prettyFeatureName)
+    fields = ('failure={:d}i'.format(result) , 'sha1="{}"'.format(sha1))
+
+    data = '%s,%s %s %i' % (measurement, ','.join(tags), ','.join(fields), timestamp_nano)
+
+    print(data)
+
+    requests.post("http://10.213.255.45:8086/write?db=feature_system", data=data.encode('utf-8'))
+
+
 try:
     log_suffix = '_'+sys.argv[1]
 except IndexError:
     log_suffix = '_log'
-
-
 
 repo_features = dict()
 
@@ -46,12 +78,32 @@ print("------------------------------------------")
 #
 #-------------------------------------------------------------------
 
-repo_run = subprocess.run(["git", "submodule", "foreach", "-q", r"echo $path"], stdout=subprocess.PIPE, universal_newlines=True)
 
-repo_list = repo_run.stdout.splitlines();
+repo_list = sys.argv[2:]
 
-#print(repo_list)
-#print('-------------------------------------------')
+if not repo_list:
+    repo_run = subprocess.run(["git", "submodule", "foreach", "-q", r"echo $path"], stdout=subprocess.PIPE, universal_newlines=True)
+
+    repo_list = repo_run.stdout.splitlines();
+
+
+print('Repositories:', repo_list)
+print('-------------------------------------------')
+
+
+repo_sha1s = {}
+
+def get_sha1(repo):
+    sha1_run =  subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
+    repo_sha1s[repo] =  sha1_run.stdout.splitlines()[0]
+
+
+
+for r in repo_list:
+    get_sha1(r)
+
+print(repo_sha1s)
+print('-------------------------------------------')
 
 tmp_repo_set = set(repo_list)
 dependencies = dict()
@@ -221,6 +273,7 @@ for current_repo in sorted_repos:
                 print(timestamp(), 'Build result',
                       build_retc.returncode, file=outfile, flush=True)
                 success = build_retc.returncode == 0
+                submit_stats(r, test_feature, success, repo_sha1s[r])
                 if not success:
                     print(timestamp(), 'Build error', r, test_feature, "(from", current_repo, ")", file=errfile, flush=True)
                     r_to_test -= rrdeps[r]
