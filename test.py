@@ -20,7 +20,7 @@ components_qtbase = [
     '-no-opengl',
     '-no-cups',
     '-no-fontconfig',
-    '-no-freetype',
+####    '-no-freetype',
     '-no-harfbuzz',
     '-no-ssl',
     '-no-xkbcommon',
