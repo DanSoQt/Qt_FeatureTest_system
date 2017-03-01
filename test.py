@@ -196,7 +196,7 @@ print('  ', sorted_repos)
 
 
 
-configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-developer-build", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-opensource", "-confirm-license" ]
+configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-developer-build", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-nomake", "tools", "-opensource", "-confirm-license" ]
 
 outfile = open(my_output_dir+'results'+log_suffix, 'a')
 errfile = open(my_output_dir+'errors'+log_suffix, 'a')
@@ -273,7 +273,10 @@ for current_repo in sorted_repos:
                 print(timestamp(), 'Build result',
                       build_retc.returncode, file=outfile, flush=True)
                 success = build_retc.returncode == 0
-                submit_stats(r, test_feature, success, repo_sha1s[r])
+                try:
+                    submit_stats(r, test_feature, success, repo_sha1s[r])
+                except:
+                    print('Cannot connect to database')
                 if not success:
                     print(timestamp(), 'Build error', r, test_feature, "(from", current_repo, ")", file=errfile, flush=True)
                     r_to_test -= rrdeps[r]
