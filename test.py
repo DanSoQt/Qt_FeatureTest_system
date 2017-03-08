@@ -241,6 +241,7 @@ skip_list = []
 #### testing
 ####skip_list = ["qtbase", "qtxmlpatterns"]
 
+databaseError = False
 
 # start out clean
 print("cleaning all")
@@ -273,10 +274,12 @@ for current_repo in sorted_repos:
                 print(timestamp(), 'Build result',
                       build_retc.returncode, file=outfile, flush=True)
                 success = build_retc.returncode == 0
-                try:
-                    submit_stats(r, test_feature, success, repo_sha1s[r])
-                except:
-                    print('Cannot connect to database')
+                if not databaseError:
+                    try:
+                        submit_stats(r, test_feature, success, repo_sha1s[r])
+                    except:
+                        databaseError = True
+                        print('Cannot connect to database')
                 if not success:
                     print(timestamp(), 'Build error', r, test_feature, "(from", current_repo, ")", file=errfile, flush=True)
                     r_to_test -= rrdeps[r]
