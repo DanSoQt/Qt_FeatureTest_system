@@ -24,6 +24,7 @@ components_qtbase = [
     '-no-harfbuzz',
     '-no-ssl',
     '-no-xkbcommon',
+    '-no-xkbcommon-evdev',
 ]
 
 
