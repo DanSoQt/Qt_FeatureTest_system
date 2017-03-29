@@ -3,8 +3,9 @@ import datetime
 import re
 import copy
 import sys
+import collections
 
-from socket import gethostname
+#from socket import gethostname
 import requests
 import time
 
@@ -29,7 +30,7 @@ components_qtbase = [
 
 
 
-HOSTNAME="10.213.255.45"
+#HOSTNAME="10.213.255.45"
 
 
 timestamp_nano = time.time() * 1e9
@@ -40,7 +41,7 @@ def remove_prefix(text, prefix):
     return text
 
 def submit_stats(moduleName, featureName, success, sha1):
-    hostname = gethostname()
+    #hostname = gethostname()
 
     measurement = 'build_test'
     status = 'success' if success else 'failure'
@@ -54,6 +55,30 @@ def submit_stats(moduleName, featureName, success, sha1):
     print(data)
 
     requests.post("http://10.213.255.45:8086/write?db=feature_system", data=data.encode('utf-8'))
+    pass
+
+
+
+
+def submit_numstats(moduleName, failure_ratio, failure_count, sha1):
+    measurement = 'build_stats'
+
+    tags = ('platform=Ubuntu_16.04', 'module='+moduleName)
+    fields = ('failurepercent={:f}'.format(failure_ratio*100) , 'failurecount={:d}'.format(failure_count), 'sha1="{}"'.format(sha1))
+
+    ###timestamp_nano = timestamp_secs * 1e9
+
+    data = '%s,%s %s %i' % (measurement, ','.join(tags), ','.join(fields), timestamp_nano)
+
+    print(data)
+
+    requests.post("http://10.213.255.45:8086/write?db=feature_system", data=data.encode('utf-8'))
+
+
+
+
+
+
 
 
 try:
@@ -196,11 +221,13 @@ print('  ', sorted_repos)
 #-------------------------------------------------------------------
 
 
+###### "-developer-build", does not play well with syncqt
 
-configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-developer-build", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-nomake", "tools", "-opensource", "-confirm-license" ]
+configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-nomake", "tools", "-opensource", "-confirm-license" ]
 
 outfile = open(my_output_dir+'results'+log_suffix, 'a')
 errfile = open(my_output_dir+'errors'+log_suffix, 'a')
+warnfile = open(my_output_dir+'warnings'+log_suffix, 'a')
 
 
 #./configure -recheck-all -no-pch -release -developer-build -no-warnings-are-errors -nomake examples -nomake tests -opensource -confirm-license -no-feature-wheelevent
@@ -227,8 +254,6 @@ def configure_qt(opt):
         print("Configure error:", opt, file=errfile, flush=True)
     return conf_retc.returncode == 0
 
-
-
 def print_errors(log):
     print(log)
     for line in log.splitlines():
@@ -237,10 +262,27 @@ def print_errors(log):
     print('----------------------------------------------------------\n')
 
 
+def print_warnings(modulename, log):
+    warn_count = 0
+    warnings_seen = set()
+    print('Warnings for:', modulename, file=warnfile)
+    for line in log.splitlines():
+        if 'warning:' in line and not line in warnings_seen:
+            warn_count += 1
+            warnings_seen.add(line)
+            print('        ', line, file=warnfile)
+    print('Module:', modulename, 'warning count:', warn_count, file=warnfile)
+    print('----------\n', file=warnfile, flush=True)
+
 skip_list = []
 
 #### testing
 ####skip_list = ["qtbase", "qtxmlpatterns"]
+
+
+total_build_count = 0
+
+error_counts = collections.defaultdict(int)
 
 databaseError = False
 
@@ -275,6 +317,9 @@ for current_repo in sorted_repos:
                 print(timestamp(), 'Build result',
                       build_retc.returncode, file=outfile, flush=True)
                 success = build_retc.returncode == 0
+                total_build_count += 1
+                if not success:
+                    error_counts[r] += 1
                 if not databaseError:
                     try:
                         submit_stats(r, test_feature, success, repo_sha1s[r])
@@ -285,9 +330,17 @@ for current_repo in sorted_repos:
                     print(timestamp(), 'Build error', r, test_feature, "(from", current_repo, ")", file=errfile, flush=True)
                     r_to_test -= rrdeps[r]
                     print_errors(build_retc.stderr)
-
-
+                else:
+                    print_warnings(r, log)
 
 
     #clean all rdeps before testing next repo
     clean_repos(repos_to_test)
+
+
+# report build stats for each repo (no error handling since the script ends here anyway)
+
+for repo in sorted_repos:
+    errorCount = error_counts[repo]
+    errorRatio = errorCount / total_build_count
+    submit_numstats(repo, errorRatio, errorCount, repo_sha1s[repo])
