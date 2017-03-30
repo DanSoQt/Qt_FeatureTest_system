@@ -28,7 +28,7 @@ components_qtbase = [
     '-no-xkbcommon-evdev',
 ]
 
-
+connect_to_database = True
 
 #HOSTNAME="10.213.255.45"
 
@@ -41,6 +41,8 @@ def remove_prefix(text, prefix):
     return text
 
 def submit_stats(moduleName, featureName, success, sha1):
+    if not connect_to_database:
+        return
     #hostname = gethostname()
 
     measurement = 'build_test'
@@ -61,6 +63,8 @@ def submit_stats(moduleName, featureName, success, sha1):
 
 
 def submit_numstats(moduleName, failure_ratio, failure_count, sha1):
+    if not connect_to_database:
+        return
     measurement = 'build_stats'
 
     tags = ('platform=Ubuntu_16.04', 'module='+moduleName)
@@ -284,11 +288,12 @@ def print_warnings(featurename, modulename, log, baseline):
     if baseline:
         baseline_warnings[modulename] = warnings_seen
 
-skip_list = set()
+###skip_list = set()
 
 #### testing
 ####skip_list = {"qtbase", "qtxmlpatterns"}
 
+baseline_errors = set()
 
 total_build_count = 0
 
@@ -308,8 +313,8 @@ for current_repo in sorted_repos:
         continue
 
 
-    if current_repo in skip_list:
-        continue
+##    if current_repo in skip_list:
+##        continue
 
     repos_to_test = rrdeps[current_repo]
 
@@ -320,7 +325,7 @@ for current_repo in sorted_repos:
 
         configure_qt(test_feature)
         for r in sorted_repos:
-            if r in r_to_test:
+            if r in r_to_test and not r in baseline_errors:
                 print(timestamp(), "Building", r, "with", test_feature, file=outfile, flush=True)
                 print("Building", r, "...")
                 build_retc = subprocess.run(["make", "-s", "module-" + r],
@@ -346,7 +351,7 @@ for current_repo in sorted_repos:
 
                 # if the baseline does not build, there's no point in testing features
                 if baseline_build and not success:
-                    skip_list.update(rrdeps[r])
+                    baseline_errors.update(rrdeps[r])
 
 
     #clean all rdeps before testing next repo
