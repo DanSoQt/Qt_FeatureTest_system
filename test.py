@@ -261,23 +261,33 @@ def print_errors(log):
             print('        ', line, file=errfile, flush=True)
     print('----------------------------------------------------------\n')
 
+baseline_warnings = {}
 
-def print_warnings(modulename, log):
+def print_warnings(featurename, modulename, log, baseline):
     warn_count = 0
     warnings_seen = set()
-    print('Warnings for:', modulename, file=warnfile)
+    if not baseline:
+        warnings_seen = baseline_warnings[modulename]
+
+    header_printed = False
     for line in log.splitlines():
         if 'warning:' in line and not line in warnings_seen:
+            if not header_printed:
+                print('Warnings for:', modulename, featurename, file=warnfile)
+                header_printed = True
             warn_count += 1
             warnings_seen.add(line)
             print('        ', line, file=warnfile)
-    print('Module:', modulename, 'warning count:', warn_count, file=warnfile)
-    print('----------\n', file=warnfile, flush=True)
+    if warn_count > 0:
+        print('Module:', modulename, 'feature:', featurename, 'warning count:', warn_count, file=warnfile)
+        print('----------\n', file=warnfile, flush=True)
+    if baseline:
+        baseline_warnings[modulename] = warnings_seen
 
-skip_list = []
+skip_list = set()
 
 #### testing
-####skip_list = ["qtbase", "qtxmlpatterns"]
+####skip_list = {"qtbase", "qtxmlpatterns"}
 
 
 total_build_count = 0
@@ -304,6 +314,7 @@ for current_repo in sorted_repos:
     repos_to_test = rrdeps[current_repo]
 
     for test_feature in repo_features[current_repo]:
+        baseline_build = (test_feature == '__baseline__')
         clean_repos(repos_to_test)
         r_to_test = repos_to_test.copy()
 
@@ -331,7 +342,11 @@ for current_repo in sorted_repos:
                     r_to_test -= rrdeps[r]
                     print_errors(build_retc.stderr)
                 else:
-                    print_warnings(r, log)
+                    print_warnings(test_feature, r, build_retc.stderr, baseline_build)
+
+                # if the baseline does not build, there's no point in testing features
+                if baseline_build and not success:
+                    skip_list.update(rrdeps[r])
 
 
     #clean all rdeps before testing next repo
