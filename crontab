@@ -1,2 +1,10 @@
 SHELL=/bin/bash
-34 16,18,20,22 * * *       flock --verbose -n /home/paul/dev/ex/git/feature-test/ /home/paul/dev/ex/git/feature-test/runscript >> /home/paul/dev/ex/git/feature-test/output 2>&1
+
+#min hour day month weekday
+
+
+# Tuesday and Thursday end of workday
+0 16,18,20,22 * * 2,3,4       flock --verbose -n /home/paul/dev/ex/git/feature-test/ /home/paul/dev/ex/git/feature-test/runscript-bleeding-edge >> /home/paul/dev/ex/git/feature-test/output 2>&1
+
+# Sunday at midnight
+0 0 * * 0       flock --verbose -n /home/paul/dev/ex/git/feature-test/ /home/paul/dev/ex/git/feature-test/runscript-bleeding-edge >> /home/paul/dev/ex/git/feature-test/output 2>&1
