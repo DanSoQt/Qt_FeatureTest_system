@@ -5,13 +5,12 @@ import copy
 import sys
 import collections
 
-#from socket import gethostname
 import requests
 import time
-
+import os
+import json
 
 my_output_dir = "/home/paul/dev/ex/git/feature-test/"
-my_json_parser = "/home/paul/dev/ex/git/feature-test/jsontest/jsontest"
 
 components_qtbase = [
     '-no-widgets',
@@ -78,29 +77,11 @@ def submit_numstats(moduleName, failure_ratio, failure_count, sha1):
 
     requests.post("http://10.213.255.45:8086/write?db=feature_system", data=data.encode('utf-8'))
 
-
-
-
-
-
-
-
 try:
     log_suffix = '_'+sys.argv[1]
 except IndexError:
     log_suffix = '_log'
 
-repo_features = dict()
-
-feature_run =  subprocess.run(["git", "submodule", "foreach", my_json_parser], stderr=subprocess.PIPE, universal_newlines=True)
-exec(feature_run.stderr)
-
-repo_features['qtbase'] += components_qtbase
-repo_features['qtbase'].insert(0, '__baseline__')
-
-
-print("Features:", repo_features)
-print("------------------------------------------")
 
 #-------------------------------------------------------------------
 #
@@ -216,6 +197,55 @@ print('Sort order:')
 print('  ', sorted_repos)
 
 
+#-------------------------------------------------------------------
+#
+# Features
+#
+#-------------------------------------------------------------------
+
+repo_features = dict()
+
+
+def getFeaturesFromJson(json_obj):
+    features = []
+    if json_obj.get('module') and 'features' in json_obj:
+        for feature, content in json_obj['features'].items():
+            if 'purpose' in content:
+                features.append('-no-feature-'+feature)
+    return features
+
+
+def getFeaturesFromRepo(repo):
+    repo_features[repo] = []
+    for root, dirs, files in os.walk(repo):
+        for file in files:
+            if file == 'configure.json':
+                path = os.path.join(root, file)
+                print('\n', path)
+                with open(path) as json_data:
+                    try:
+                        d = json.load(json_data, strict = False)
+                        repo_features[repo] += getFeaturesFromJson(d)
+                    except json.decoder.JSONDecodeError as e:
+                        print('****', path, e.lineno, "-----", e.msg)
+                    except KeyError:
+                        pass
+
+
+
+for repo in sorted_repos:
+    getFeaturesFromRepo(repo)
+
+
+
+repo_features['qtbase'] += components_qtbase
+repo_features['qtbase'].insert(0, '__baseline__')
+
+
+print("Features:", repo_features)
+print("------------------------------------------")
+
+
 
 
 #-------------------------------------------------------------------
@@ -232,6 +262,8 @@ configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-no
 outfile = open(my_output_dir+'results'+log_suffix, 'a')
 errfile = open(my_output_dir+'errors'+log_suffix, 'a')
 warnfile = open(my_output_dir+'warnings'+log_suffix, 'a')
+
+htmlfile = open(my_output_dir+'featuretest'+log_suffix+'.html', 'a')
 
 
 #./configure -recheck-all -no-pch -release -developer-build -no-warnings-are-errors -nomake examples -nomake tests -opensource -confirm-license -no-feature-wheelevent
