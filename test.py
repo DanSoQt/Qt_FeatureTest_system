@@ -10,6 +10,12 @@ import time
 import os
 import json
 
+
+# --- Local modules
+
+import htmlwriter
+
+
 my_output_dir = "/home/paul/dev/ex/git/feature-test/"
 
 components_qtbase = [
@@ -290,33 +296,41 @@ def configure_qt(opt):
         print("Configure error:", opt, file=errfile, flush=True)
     return conf_retc.returncode == 0
 
-def print_errors(log):
+def report_errors(featurename, modulename, log):
     print(log)
+    err_str = ''
     for line in log.splitlines():
         if 'error:' in line or 'Project ERROR:' in line or line.startswith('make['):
+            if (err_str):
+                err_str += '\n'
+                err_str += line
             print('        ', line, file=errfile, flush=True)
     print('----------------------------------------------------------\n')
+    htmlwriter.registerError(modulename, featurename, err_str)
 
 baseline_warnings = {}
 
-def print_warnings(featurename, modulename, log, baseline):
+def report_warnings(featurename, modulename, log, baseline):
     warn_count = 0
     warnings_seen = set()
+    warn_string = ''
     if not baseline:
         warnings_seen = baseline_warnings[modulename]
 
-    header_printed = False
     for line in log.splitlines():
         if 'warning:' in line and not line in warnings_seen:
-            if not header_printed:
-                print('Warnings for:', modulename, featurename, file=warnfile)
-                header_printed = True
+            if warn_string:
+                warn_string += '\n'
+            warn_string += line
             warn_count += 1
             warnings_seen.add(line)
             print('        ', line, file=warnfile)
     if warn_count > 0:
-        print('Module:', modulename, 'feature:', featurename, 'warning count:', warn_count, file=warnfile)
+        print('Warnings for:', modulename, 'feature:', featurename, 'warning count:', warn_count, file=warnfile)
+        print(warn_string, file=warnfile)
         print('----------\n', file=warnfile, flush=True)
+        if not baseline:
+            htmlwriter.registerWarning(modulename, featurename, warn_count, warn_string)
     if baseline:
         baseline_warnings[modulename] = warnings_seen
 
@@ -377,9 +391,9 @@ for current_repo in sorted_repos:
                 if not success:
                     print(timestamp(), 'Build error', r, test_feature, "(from", current_repo, ")", file=errfile, flush=True)
                     r_to_test -= rrdeps[r]
-                    print_errors(build_retc.stderr)
+                    report_errors(test_feature, r, build_retc.stderr)
                 else:
-                    print_warnings(test_feature, r, build_retc.stderr, baseline_build)
+                    report_warnings(test_feature, r, build_retc.stderr, baseline_build)
 
                 # if the baseline does not build, there's no point in testing features
                 if baseline_build and not success:
@@ -388,6 +402,9 @@ for current_repo in sorted_repos:
 
     #clean all rdeps before testing next repo
     clean_repos(repos_to_test)
+
+
+htmlwriter.writeHtml(htmlfile)
 
 
 # report build stats for each repo (no error handling since the script ends here anyway)
