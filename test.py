@@ -89,14 +89,31 @@ except IndexError:
     log_suffix = '_log'
 
 
+
+#### Selftest logic ####
+
+quick_test_run = False
+test_feature_dict = {}
+try:
+    json_feature_arg = sys.argv[2]
+    test_feature_dict = json.loads(json_feature_arg)
+    repo_list = list(test_feature_dict.keys())
+except:
+    # normal run: autodetect repos and features
+    repo_list = []
+else:
+    # test run: use the specified repos and features
+    quick_test_run = True
+    components_qtbase = []
+
+
+
+
 #-------------------------------------------------------------------
 #
 # Repos and dependencies
 #
 #-------------------------------------------------------------------
-
-
-repo_list = sys.argv[2:]
 
 if not repo_list:
     repo_run = subprocess.run(["git", "submodule", "foreach", "-q", r"echo $path"], stdout=subprocess.PIPE, universal_newlines=True)
@@ -214,7 +231,7 @@ repo_features = dict()
 
 def getFeaturesFromJson(json_obj):
     features = []
-    if json_obj.get('module') and 'features' in json_obj:
+    if 'features' in json_obj:
         for feature, content in json_obj['features'].items():
             if 'purpose' in content:
                 features.append('-no-feature-'+feature)
@@ -237,12 +254,11 @@ def getFeaturesFromRepo(repo):
                     except KeyError:
                         pass
 
-
-
-for repo in sorted_repos:
-    getFeaturesFromRepo(repo)
-
-
+if quick_test_run:
+    repo_features = test_feature_dict
+else:
+    for repo in sorted_repos:
+        getFeaturesFromRepo(repo)
 
 repo_features['qtbase'] += components_qtbase
 repo_features['qtbase'].insert(0, '__baseline__')
@@ -250,9 +266,6 @@ repo_features['qtbase'].insert(0, '__baseline__')
 
 print("Features:", repo_features)
 print("------------------------------------------")
-
-
-
 
 #-------------------------------------------------------------------
 #
@@ -268,8 +281,6 @@ configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-no
 outfile = open(my_output_dir+'results'+log_suffix, 'a')
 errfile = open(my_output_dir+'errors'+log_suffix, 'a')
 warnfile = open(my_output_dir+'warnings'+log_suffix, 'a')
-
-htmlfile = open(my_output_dir+'featuretest'+log_suffix+'.html', 'a')
 
 
 #./configure -recheck-all -no-pch -release -developer-build -no-warnings-are-errors -nomake examples -nomake tests -opensource -confirm-license -no-feature-wheelevent
@@ -303,7 +314,7 @@ def report_errors(featurename, modulename, log):
         if 'error:' in line or 'Project ERROR:' in line or line.startswith('make['):
             if (err_str):
                 err_str += '\n'
-                err_str += line
+            err_str += line
             print('        ', line, file=errfile, flush=True)
     print('----------------------------------------------------------\n')
     htmlwriter.registerError(modulename, featurename, err_str)
@@ -399,12 +410,19 @@ for current_repo in sorted_repos:
                 if baseline_build and not success:
                     baseline_errors.update(rrdeps[r])
 
-
     #clean all rdeps before testing next repo
     clean_repos(repos_to_test)
 
 
-htmlwriter.writeHtml(htmlfile)
+
+#------------------------
+# End of test run
+#------------------------
+
+
+
+with open(my_output_dir+'featuretest'+log_suffix+'.html') as htmlfile:
+    htmlwriter.writeHtml(htmlfile)
 
 
 # report build stats for each repo (no error handling since the script ends here anyway)
