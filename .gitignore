@@ -1,0 +1,7 @@
+*~
+*.html
+__pycache__/
+html/
+data/
+json2
+jsontest
