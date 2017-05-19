@@ -135,6 +135,7 @@ def get_sha1(repo):
 
 for r in repo_list:
     get_sha1(r)
+    htmlwriter.registerRepo(r, repo_sha1s[r])
 
 print(repo_sha1s)
 print('-------------------------------------------')
@@ -355,6 +356,7 @@ baseline_errors = set()
 total_build_count = 0
 
 error_counts = collections.defaultdict(int)
+total_error_count = 0
 
 databaseError = False
 
@@ -393,6 +395,7 @@ for current_repo in sorted_repos:
                 total_build_count += 1
                 if not success:
                     error_counts[r] += 1
+                    total_error_count += 1
                 if not databaseError:
                     try:
                         submit_stats(r, test_feature, success, repo_sha1s[r])
@@ -420,8 +423,9 @@ for current_repo in sorted_repos:
 #------------------------
 
 
+htmlwriter.registerStats(buildcount=total_build_count)
 
-with open(my_output_dir+'featuretest'+log_suffix+'.html') as htmlfile:
+with open(my_output_dir+'featuretest'+log_suffix+'.html', 'w') as htmlfile:
     htmlwriter.writeHtml(htmlfile)
 
 

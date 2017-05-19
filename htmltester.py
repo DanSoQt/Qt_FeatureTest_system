@@ -369,17 +369,40 @@ make[1]: *** [sub-src-make_first] Error 2
 make: *** [module-qtcharts] Error 2'''
 
 
+warn_msg="""\
+kernel/qclipboard.cpp:298:12: warning: ‘QString::QString(const QByteArray&)’ is deprecated [-Wdeprecated-declarations]
+qxcbmime.cpp:164:55: warning: unused parameter ‘requestedType’ [-Wunused-parameter]"""
 
 
+warn_msg2="""\
+itemviews/qheaderview.cpp:3183:53: warning: unused parameter ‘section’ [-Wunused-parameter]
+itemviews/qheaderview.cpp:3183:66: warning: unused parameter ‘position’ [-Wunused-parameter]
+dialogs/qdialog.cpp:63:50: warning: unused parameter ‘dialog’ [-Wunused-parameter]
+util/qsystemtrayicon.cpp:498:15: warning: unused variable ‘iconSize’ [-Wunused-variable]
+util/qsystemtrayicon.cpp:478:39: warning: unused parameter ‘icon’ [-Wunused-parameter]
+util/qsystemtrayicon.cpp:478:60: warning: unused parameter ‘title’ [-Wunused-parameter]
+util/qsystemtrayicon.cpp:479:41: warning: unused parameter ‘message’ [-Wunused-parameter]"""
 
+warn_msg3 = '''api/qeglfsscreen.cpp:150:51: warning: unused parameter ‘pos’ [-Wunused-parameter]'''
+
+
+i = 0;
 for (repo,features) in feature_dict.items():
+    htmlwriter.registerRepo(repo, "badf00d")
     for feature in features:
         htmlwriter.registerError(repo, feature, long_errmsg)
+    i += 1;
+    if (i % 5 == 0):
+        htmlwriter.registerWarning(repo, '-no-such-feature', 2, warn_msg)
+    if (i % 3 == 0):
+        htmlwriter.registerWarning(repo, '-no-feature-dummy', 7, warn_msg2)
+    if (i % 7 == 0):
+        htmlwriter.registerWarning(repo, '-no-feature-something', 1, warn_msg3)
 
 
 
 
-
+htmlwriter.registerStats(buildcount = 4321)
 
 
 
