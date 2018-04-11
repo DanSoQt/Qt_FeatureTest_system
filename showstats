@@ -1,0 +1,72 @@
+#!/usr/bin/awk -f
+
+
+# Utility script to parse results file and display running stats
+# typically invoked like this:
+#     tail -n+1 -f results_2018-04-10T12\:40| ./showstats
+
+BEGIN {
+    duration = "---"
+    feature = "???"
+}
+
+function diffsecs(t1,t2) {
+    split(t1,a1,/:/)
+    split(t2,a2,/:/)
+    h = a2[1]-a1[1];
+    if (h < 0)
+        h += 24;
+    m = a2[2]-a1[2]
+    s = a2[3]-a1[3]
+    return h*3600 + m*60 +s
+}
+
+function timediff(t1,t2) {
+    s = diffsecs(t1,t2)
+    return sprintf("%2d:%02d",s/60, s%60)
+}
+
+function bigtimediff(t1,t2) {
+    s = diffsecs(t1,t2)
+    m = s / 60
+    h = m / 60
+    return sprintf("%2d:%02d:%02d",h, m % 60, s%60)
+}
+
+
+/Configuring/ {
+    if (i > 0) {
+        #printf "\033[2K\r%d %s %s [%d/%d]\n", i, duration, feature, err, j
+        printf "\n"
+    } else {
+        starttime = $2
+    }
+    ++i
+    ctime=$2
+    feature=$4
+    j=0
+    err=0
+    module="???"
+    errmodule = "[none]"
+    printf("%3d %s (%s)", i, feature, ctime)
+}
+/Building/ {
+duration = timediff(ctime, $2)
+module = $4
+j++
+printf "\033[2K\r%3d %s %s (err: %d) %s #%d (@%s)",i, duration, $6, err, $4, j, $2
+}
+/Build result/ {
+    if ($5 == 2) {
+        err++
+        errmodule = module
+    }
+    duration = timediff(ctime, $2)
+    lasttime = $2
+    if (err <= 0) {
+        printf "\033[2K\r%3d \033[1m%s\033[0m %s \033[32;1m[%d/%d]\033[0m", i, duration, feature, err, j
+    } else {
+        printf "\033[2K\r%3d \033[1m%s\033[0m %s \033[31;1m[%d/%d] (%s)\033[0m", i, duration, feature, err, j, errmodule
+    }
+}
+END { printf "\nTotal: %s\n", bigtimediff(starttime, lasttime) }

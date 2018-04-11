@@ -3,11 +3,17 @@ SHELL=/bin/bash
 #min hour day month weekday
 
 
-### Test test test
+### Short test now
 #51 * * * *       flock --verbose -n /home/paul/dev/ex/git/feature-test/ /home/paul/dev/ex/git/feature-test/runscript-short-test >> /home/paul/dev/ex/git/feature-test/output 2>&1
 
+### Full test now
+
+#40 * * * 2,4       flock --verbose -n /home/paul/dev/ex/git/feature-test/ /home/paul/dev/ex/git/feature-test/runscript-bleeding-edge >> /home/paul/dev/ex/git/feature-test/output 2>&1
+
+
+
 # Tuesday and Thursday end of workday
-0 17,18,20,22 * * 2,4       flock --verbose -n /home/paul/dev/ex/git/feature-test/ /home/paul/dev/ex/git/feature-test/runscript-bleeding-edge >> /home/paul/dev/ex/git/feature-test/output 2>&1
+#0 17,18,20,22 * * 2,4       flock --verbose -n /home/paul/dev/ex/git/feature-test/ /home/paul/dev/ex/git/feature-test/runscript-bleeding-edge >> /home/paul/dev/ex/git/feature-test/output 2>&1
 
 # Sunday at midnight
 0 0 * * 0       flock --verbose -n /home/paul/dev/ex/git/feature-test/ /home/paul/dev/ex/git/feature-test/runscript-bleeding-edge >> /home/paul/dev/ex/git/feature-test/output 2>&1

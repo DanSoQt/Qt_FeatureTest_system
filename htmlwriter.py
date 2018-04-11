@@ -13,7 +13,7 @@ _warnings_by_repo = {}
 _html_start = '''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html>
 <head>
-  <title>Feature test {}</title>
+  <title>Feature build test {}</title>
   <meta charset="UTF-8">
   <style type="text/css">
   address {{
@@ -29,12 +29,12 @@ _html_start = '''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
 
 
 _html_end = '''
-<address> Copyright 2017 The Qt Company</address>
+<address> Copyright 2018 The Qt Company</address>
 </body>
 </html>
 '''
 
-_top_text ='''<h1>Qt feature test results for {datestring}</h1>
+_top_text ='''<h1>Qt feature build test results for {datestring}</h1>
 <table>
   <tr>
     <td style="text-align:right"><strong>{errcount}</strong></td>
