@@ -1,0 +1,414 @@
+- build_warncount: 35
+  buildcount: 5738
+  date: 2017-04-18 17:19
+  errcount: 32
+  file: featuretest_2017-04-18T17:19.html
+  total_warncount: 138
+- build_warncount: 29
+  buildcount: 5836
+  date: 2017-04-20 16:00
+  errcount: 31
+  file: featuretest_2017-04-20T16:00.html
+  total_warncount: 130
+- build_warncount: 32
+  buildcount: 5738
+  date: 2017-04-23 00:00
+  errcount: 29
+  file: featuretest_2017-04-23T00:00.html
+  total_warncount: 131
+- build_warncount: 28
+  buildcount: 5738
+  date: 2017-04-25 16:00
+  errcount: 27
+  file: featuretest_2017-04-25T16:00.html
+  total_warncount: 125
+- build_warncount: 26
+  buildcount: 5656
+  date: 2017-04-27 16:00
+  errcount: 30
+  file: featuretest_2017-04-27T16:00.html
+  total_warncount: 120
+- build_warncount: 27
+  buildcount: 5784
+  date: 2017-04-30 00:00
+  errcount: 26
+  file: featuretest_2017-04-30T00:00.html
+  total_warncount: 115
+
+- build_warncount: 27
+  buildcount: 5752
+  date: 2017-05-02 16:00
+  errcount: 27
+  file: featuretest_2017-05-02T16:00.html
+  total_warncount: 111
+- build_warncount: 25
+  buildcount: 5752
+  date: 2017-05-04 16:00
+  errcount: 27
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-04T16:00.html
+  total_warncount: 110
+
+- build_warncount: 25
+  buildcount: 5784
+  date: 2017-05-07 00:00
+  errcount: 26
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-07T00:00.html
+  total_warncount: 110
+
+- build_warncount: 25
+  buildcount: 5752
+  date: 2017-05-09 16:00
+  errcount: 27
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-09T16:00.html
+  total_warncount: 110
+
+- build_warncount: 26
+  buildcount: 5784
+  date: 2017-05-11 16:00
+  errcount: 26
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-11T16:00.html
+  total_warncount: 110
+
+- build_warncount: 26
+  buildcount: 5784
+  date: 2017-05-14 00:00
+  errcount: 26
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-14T00:00.html
+  total_warncount: 110
+
+- build_warncount: 26
+  buildcount: 5784
+  date: 2017-05-16 16:00
+  errcount: 26
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-16T16:00.html
+  total_warncount: 110
+
+- build_warncount: 25
+  buildcount: 5784
+  date: 2017-05-18 16:00
+  errcount: 26
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-18T16:00.html
+  total_warncount: 110
+
+- build_warncount: 26
+  buildcount: 5784
+  date: 2017-05-21 00:00
+  errcount: 26
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-21T00:00.html
+  total_warncount: 110
+
+- build_warncount: 26
+  buildcount: 5784
+  date: 2017-05-23 17:00
+  errcount: 26
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-23T17:00.html
+  total_warncount: 110
+
+- build_warncount: 26
+  buildcount: 5605
+  date: 2017-05-25 17:00
+  errcount: 24
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-25T17:00.html
+  total_warncount: 110
+
+- build_warncount: 27
+  buildcount: 5784
+  date: 2017-05-28 00:00
+  errcount: 26
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-28T00:00.html
+  total_warncount: 110
+
+- build_warncount: 25
+  buildcount: 5784
+  date: 2017-05-30 17:00
+  errcount: 26
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-05-30T17:00.html
+  total_warncount: 110
+
+- build_warncount: 27
+  buildcount: 5784
+  date: 2017-06-01 17:00
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-01T17:00.html
+  total_warncount: 111
+
+- build_warncount: 27
+  buildcount: 5784
+  date: 2017-06-04 00:00
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-04T00:00.html
+  total_warncount: 111
+
+- build_warncount: 28
+  buildcount: 5784
+  date: 2017-06-06 17:00
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-06T17:00.html
+  total_warncount: 111
+
+- build_warncount: 28
+  buildcount: 5786
+  date: 2017-06-08 17:00
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-08T17:00.html
+  total_warncount: 111
+
+- build_warncount: 26
+  buildcount: 5786
+  date: 2017-06-11 00:00
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-11T00:00.html
+  total_warncount: 111
+
+- build_warncount: 28
+  buildcount: 5786
+  date: 2017-06-13 17:00
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-13T17:00.html
+  total_warncount: 111
+
+- build_warncount: 27
+  buildcount: 5786
+  date: 2017-06-15 17:00
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-15T17:00.html
+  total_warncount: 111
+
+- build_warncount: 27
+  buildcount: 5786
+  date: 2017-06-18 00:00
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-18T00:00.html
+  total_warncount: 111
+
+- build_warncount: 27
+  buildcount: 5786
+  date: 2017-06-20 17:01
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-20T17:01.html
+  total_warncount: 110
+
+- build_warncount: 25
+  buildcount: 5786
+  date: 2017-06-22 17:00
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-22T17:00.html
+  total_warncount: 110
+
+- build_warncount: 27
+  buildcount: 5786
+  date: 2017-06-25 00:00
+  errcount: 25
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-06-25T00:00.html
+  total_warncount: 110
+
+- build_warncount: 23
+  buildcount: 5169
+  date: 2017-07-02 00:00
+  errcount: 49
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-07-02T00:00.html
+  total_warncount: 97
+
+- build_warncount: 22
+  buildcount: 5147
+  date: 2017-07-09 00:00
+  errcount: 49
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-07-09T00:00.html
+  total_warncount: 97
+
+- build_warncount: 21
+  buildcount: 5147
+  date: 2017-07-16 00:00
+  errcount: 51
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-07-16T00:00.html
+  total_warncount: 93
+
+- build_warncount: 19
+  buildcount: 5105
+  date: 2017-08-13 00:00
+  errcount: 52
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-08-13T00:00.html
+  total_warncount: 92
+
+- build_warncount: 20
+  buildcount: 5105
+  date: 2017-08-20 00:00
+  errcount: 52
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-08-20T00:00.html
+  total_warncount: 92
+
+- build_warncount: 20
+  buildcount: 5105
+  date: 2017-08-27 00:00
+  errcount: 52
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-08-27T00:00.html
+  total_warncount: 92
+
+- build_warncount: 20
+  buildcount: 5111
+  date: 2017-09-03 00:00
+  errcount: 52
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-09-03T00:00.html
+  total_warncount: 92
+
+- build_warncount: 19
+  buildcount: 5089
+  date: 2017-09-10 00:00
+  errcount: 53
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-09-10T00:00.html
+  total_warncount: 92
+
+- build_warncount: 19
+  buildcount: 4983
+  date: 2017-09-17 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-09-17T00:00.html
+  total_warncount: 91
+
+- build_warncount: 18
+  buildcount: 4907
+  date: 2017-09-24 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-09-24T00:00.html
+  total_warncount: 91
+
+- build_warncount: 19
+  buildcount: 4940
+  date: 2017-10-01 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-10-01T00:00.html
+  total_warncount: 91
+
+- build_warncount: 19
+  buildcount: 4940
+  date: 2017-10-08 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-10-08T00:00.html
+  total_warncount: 91
+
+- build_warncount: 19
+  buildcount: 4940
+  date: 2017-10-15 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-10-15T00:00.html
+  total_warncount: 91
+
+- build_warncount: 19
+  buildcount: 4940
+  date: 2017-10-22 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-10-22T00:00.html
+  total_warncount: 91
+
+- build_warncount: 18
+  buildcount: 4940
+  date: 2017-10-29 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-10-29T00:00.html
+  total_warncount: 91
+
+- build_warncount: 18
+  buildcount: 4940
+  date: 2017-11-05 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-11-05T00:00.html
+  total_warncount: 91
+
+- build_warncount: 19
+  buildcount: 4940
+  date: 2017-11-12 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-11-12T00:00.html
+  total_warncount: 91
+
+- build_warncount: 18
+  buildcount: 4940
+  date: 2017-11-19 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-11-19T00:00.html
+  total_warncount: 91
+
+- build_warncount: 19
+  buildcount: 4940
+  date: 2017-12-03 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-12-03T00:00.html
+  total_warncount: 91
+
+- build_warncount: 18
+  buildcount: 4940
+  date: 2017-12-10 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-12-10T00:00.html
+  total_warncount: 90
+
+- build_warncount: 17
+  buildcount: 4940
+  date: 2017-12-17 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2017-12-17T00:00.html
+  total_warncount: 89
+
+- build_warncount: 17
+  buildcount: 4940
+  date: 2018-01-07 00:00
+  errcount: 56
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2018-01-07T00:00.html
+  total_warncount: 89
+
+- build_warncount: 7
+  buildcount: 4577
+  date: 2018-02-18 00:00
+  errcount: 79
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2018-02-18T00:00.html
+  total_warncount: 56
+
+- build_warncount: 7
+  buildcount: 4598
+  date: 2018-02-25 00:00
+  errcount: 78
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2018-02-25T00:00.html
+  total_warncount: 56
+
+- build_warncount: 6
+  buildcount: 4598
+  date: 2018-03-04 00:00
+  errcount: 80
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2018-03-04T00:00.html
+  total_warncount: 56
+
+- build_warncount: 6
+  buildcount: 4598
+  date: 2018-03-11 00:00
+  errcount: 80
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2018-03-11T00:00.html
+  total_warncount: 56
+
+- build_warncount: 7
+  buildcount: 4664
+  date: 2018-03-18 00:00
+  errcount: 79
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2018-03-18T00:00.html
+  total_warncount: 63
+
+- build_warncount: 8
+  buildcount: 4739
+  date: 2018-03-25 00:00
+  errcount: 81
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2018-03-25T00:00.html
+  total_warncount: 116
+
+- build_warncount: 7
+  buildcount: 4739
+  date: 2018-04-01 00:00
+  errcount: 81
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2018-04-01T00:00.html
+  total_warncount: 63
+
+- build_warncount: 7
+  buildcount: 4739
+  date: 2018-04-10 12:40
+  errcount: 81
+  file: /home/paul/dev/ex/git/feature-test/featuretest_2018-04-10T12:40.html
+  total_warncount: 62
+
