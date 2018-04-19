@@ -5,7 +5,7 @@ import copy
 
 repo_features = dict()
 
-feature_run =  subprocess.run(["git", "submodule", "foreach", "/home/paul/dev/ex/git/feature-test/jsontest/jsontest"], stderr=subprocess.PIPE, universal_newlines=True)
+feature_run =  subprocess.run(["git", "submodule", "foreach", "/jsontest/jsontest"], stderr=subprocess.PIPE, universal_newlines=True)
 
 
 

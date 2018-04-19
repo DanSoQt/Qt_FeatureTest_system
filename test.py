@@ -16,7 +16,7 @@ import json
 import htmlwriter
 
 
-my_output_dir = "/home/paul/dev/ex/git/feature-test/"
+my_output_dir = "/mnt/c/Users/dasmith/Documents/test/"
 
 components_qtbase = [
     '-no-widgets',
@@ -98,11 +98,15 @@ try:
     json_feature_arg = sys.argv[2]
     test_feature_dict = json.loads(json_feature_arg)
     repo_list = list(test_feature_dict.keys())
-except:
+    print("Running full test from json...")
+except IndexError as e:
     # normal run: autodetect repos and features
     repo_list = []
+    print("Exception when loading json features: ")
+
 else:
     # test run: use the specified repos and features
+    print("Running as a quick test run...")
     quick_test_run = True
     components_qtbase = []
 
@@ -116,7 +120,8 @@ else:
 #-------------------------------------------------------------------
 
 if not repo_list:
-    repo_run = subprocess.run(["git", "submodule", "foreach", "-q", r"echo $path"], stdout=subprocess.PIPE, universal_newlines=True)
+    print("Getting the repo list.")
+    repo_run = subprocess.run(["git", "submodule", "foreach", "-q", r"echo $path"], stdout=subprocess.PIPE, universal_newlines=True, cwd='/mnt/c/git-work/qt5_work')
 
     repo_list = repo_run.stdout.splitlines();
 
@@ -128,7 +133,8 @@ print('-------------------------------------------')
 repo_sha1s = {}
 
 def get_sha1(repo):
-    sha1_run =  subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
+    print("Directory is currently: " + repo)
+    sha1_run =  subprocess.run(["git", "rev-parse", "HEAD"], cwd='/mnt/c/git-work/qt5_work/' + repo, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
     repo_sha1s[repo] =  sha1_run.stdout.splitlines()[0]
 
 
@@ -150,7 +156,7 @@ def add_dependency(parent, child):
 
 current_sub = 'UNKNOWN'
 #opt_deps = dict()
-with open('.gitmodules') as f:
+with open('/mnt/c/git-work/qt5_work/.gitmodules') as f:
     for line in f:
         match = re.search(r'^\[submodule "(.*)"\]', line)
         if match:
@@ -231,29 +237,46 @@ repo_features = dict()
 
 
 def getFeaturesFromJson(json_obj):
+    print("trying to get features from json...")
     features = []
     if 'features' in json_obj:
+        print ("found features...")
         for feature, content in json_obj['features'].items():
             if 'purpose' in content:
                 features.append('-no-feature-'+feature)
+                print("Adding -no-feature-" + feature + " to the list to test")
+    print("\n")
     return features
 
 
 def getFeaturesFromRepo(repo):
+    print("\nAttempting to get features from repo: " + repo)
     repo_features[repo] = []
-    for root, dirs, files in os.walk(repo):
-        for file in files:
-            if file == 'configure.json':
-                path = os.path.join(root, file)
-                print('\n', path)
-                with open(path) as json_data:
-                    try:
-                        d = json.load(json_data, strict = False)
-                        repo_features[repo] += getFeaturesFromJson(d)
-                    except json.decoder.JSONDecodeError as e:
-                        print('****', path, e.lineno, "-----", e.msg)
-                    except KeyError:
-                        pass
+    configureFound = False
+    try:
+        for root, dirs, files in os.walk("/mnt/c/git-work/qt5_work/" + repo):
+            for file in files:
+                if file == 'configure.json':
+                    configureFound = True
+                    print("found configure.json. Trying to load it.")
+                    path = os.path.join(root, file)
+                    print(path)
+                    with open(path) as json_data:
+                        try:
+                            d = json.load(json_data, strict = False)
+                            repo_features[repo] += getFeaturesFromJson(d)
+                            #print("loaded the json. Found features:\n" + getFeaturesFromJson(d))
+                        except json.decoder.JSONDecodeError as e:
+                            print('****', path, e.lineno, "-----", e.msg)
+                        except KeyError:
+                            pass
+
+    except Exception as e:
+        print("there was an error walking the dirs.\n")
+        print(e)
+
+    if (configureFound == False):
+        print("Configure file not found for repo: " + repo)
 
 if quick_test_run:
     repo_features = test_feature_dict
@@ -292,9 +315,9 @@ def timestamp():
 def clean_repos(repos_to_clean):
     for r in repos_to_clean:
         print("cleaning", r)
-        subprocess.run(["git", "clean", "-fdx"], cwd=r, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["git", "clean", "-fdx"], cwd='/mnt/c/git-work/qt5_work/' + r, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def configure_qt(opt):
+def configure_qt(opt, repo = ''):
     print(timestamp(), "Configuring", opt, file=outfile, flush=True)
     configurecmd = configuretemplate.copy()
     if opt != '__baseline__':
@@ -302,9 +325,11 @@ def configure_qt(opt):
 
     print("configuring", opt)
     ### TODO: capture stderr
-    conf_retc = subprocess.run(configurecmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    conf_retc = subprocess.run(configurecmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd='/mnt/c/git-work/qt5_work/')
     print(timestamp(), 'Configure result', conf_retc.returncode,  file=outfile, flush=True)
+    print(timestamp(), 'Configure result: ', conf_retc.returncode)
     if conf_retc.returncode != 0:
+        print("Configure error:", opt)
         print("Configure error:", opt, file=errfile, flush=True)
     return conf_retc.returncode == 0
 
@@ -362,7 +387,7 @@ databaseError = False
 
 # start out clean
 print("cleaning all")
-subprocess.run(["git", "submodule", "foreach", "git", "clean", "-fdx"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+subprocess.run(["git", "submodule", "foreach", " git", "clean", "-fdx"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd='/mnt/c/git-work/qt5_work')
 
 # test all features connected to each repo
 
@@ -381,16 +406,20 @@ for current_repo in sorted_repos:
         baseline_build = (test_feature == '__baseline__')
         clean_repos(repos_to_test)
         r_to_test = repos_to_test.copy()
-
-        configure_qt(test_feature)
+        
+        print("configuring the repo. ")
+        configure_qt(test_feature, current_repo)
         for r in sorted_repos:
+            print("Current Repo: " + r)
             if r in r_to_test and not r in baseline_errors:
+                print("Repo was in the list to test. Attempting to build...")
                 print(timestamp(), "Building", r, "with", test_feature, file=outfile, flush=True)
                 print("Building", r, "...")
-                build_retc = subprocess.run(["make", "-s", "module-" + r],
-                                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True)
+                build_retc = subprocess.run(["make", "-j", "8", "module-" + r],
+                                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True, cwd='/mnt/c/git-work/qt5_work/')
                 print(timestamp(), 'Build result',
                       build_retc.returncode, file=outfile, flush=True)
+                print(build_retc.check_returncode)
                 success = build_retc.returncode == 0
                 total_build_count += 1
                 if not success:
