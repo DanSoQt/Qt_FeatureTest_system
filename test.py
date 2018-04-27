@@ -4,6 +4,7 @@ import re
 import copy
 import sys
 import collections
+import platform
 
 import requests
 import time
@@ -54,14 +55,15 @@ def submit_stats(moduleName, featureName, success, sha1):
     status = 'success' if success else 'failure'
     result = 0 if success else 1;
     prettyFeatureName = remove_prefix(featureName, '-no-feature-')
-    tags = ('platform=Ubuntu_16.04', 'module='+moduleName, 'status='+status, 'feature='+prettyFeatureName)
+    tags = ('machineName=' + platform.node(), 'platform=Ubuntu_16.04', 'arch=x64', 'module='+moduleName, 'status='+status, 'feature='+prettyFeatureName)
     fields = ('failure={:d}i'.format(result) , 'sha1="{}"'.format(sha1))
 
     data = '%s,%s %s %i' % (measurement, ','.join(tags), ','.join(fields), timestamp_nano)
 
     print(data)
 
-    requests.post("http://10.213.255.45:8086/write?db=feature_system", data=data.encode('utf-8'))
+    requests.post("https://testresults.qt.io/influxdb/write?db=feature_system", auth=('feature_system_service', 'Yk2HxxKRm'), data=data.encode('utf-8'))
+    #requests.post("https://testresults.qt.io/influxdb/write?db=feature_system", data=data.encode('utf-8'))
     pass
 
 
@@ -81,7 +83,8 @@ def submit_numstats(moduleName, failure_ratio, failure_count, sha1):
 
     print(data)
 
-    requests.post("http://10.213.255.45:8086/write?db=feature_system", data=data.encode('utf-8'))
+    requests.post("https://testresults.qt.io/influxdb/write?db=feature_system", auth=('feature_system_service', 'Yk2HxxKRm'), data=data.encode('utf-8'))
+    #requests.post("http://10.213.255.45:8086/write?db=feature_system", auth=('feature_system_user', 'Yk2HxxKRm'), data=data.encode('utf-8'))
 
 try:
     log_suffix = '_'+sys.argv[1]
@@ -253,6 +256,7 @@ def getFeaturesFromRepo(repo):
     print("\nAttempting to get features from repo: " + repo)
     repo_features[repo] = []
     configureFound = False
+    #return #remove this to reenable full test.
     try:
         for root, dirs, files in os.walk("/mnt/c/git-work/qt5_work/" + repo):
             for file in files:
