@@ -9,9 +9,9 @@ import time
 import os
 import json
 import shutil
+import argparse
 
 # --- dependency modules --- make sure to install these on the local system.
-import argparse
 import requests
 
 # --- Local modules
@@ -31,10 +31,10 @@ def parseArguments():
     parser.add_argument('--workingDir', dest='workingDir', action='store', default='', required=True, help='Specify the working directory for the testing. Ensure that the user running tests has read/write access. Example: /home/feature-test/ or C:\\feature-test\\')
     parser.add_argument('--testRun', dest='testRun', action='store', default=False, required=False, help='Setting this to True should run with a short test-set of features to build')
     parser.add_argument('--qtVersion', dest='qtVersion', action='store', default='dev', required=False, help='Specify a particular branch to test. Defaults to \'dev\' if not set.')
-    parser.add_argument('--logSuffix', dest='logSuffix', action='store', default='.log', required=False, help='Specify a suffix or file extension for the log file. Default is .log if not set')
+    #parser.add_argument('--logSuffix', dest='logSuffix', action='store', default='.log', required=False, help='Specify a suffix or file extension for the log file. Default is .log if not set')
     parser.add_argument('--featureJSON', dest='featureJSON', action='store', default='', required=False, help='Specify the absoulte or relative path to a json file containing a feature set to test. Default will scan the qt installation for features.')
     parser.add_argument('--buildCores', dest='buildCores', action='store', default='2', required=False, help='Specify the number of CPU cores to use for building. Defaults to 2 as a safe value.')
-    parser.add_argument('--vsDevCmd', dest='vsDevCmd', action='store', default='C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Professional\\Common7\\Tools\\VsDevCmd.bat', required=False, help='Specify the location of the VsDevCmd.bat file for setting up the build environment on Windows.\nThis parameter is not required on linux and assumes that VS2017 is installed on windows if left blank.')
+    parser.add_argument('--vsDevCmd', dest='vsDevCmd', action='store', default='C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\Common7\\Tools\\VsDevCmd.bat', required=False, help='Specify the location of the VsDevCmd.bat file for setting up the build environment on Windows.\nThis parameter is not required on linux and assumes that VS2017 is installed on windows if left blank.')
 
     try:
         args = parser.parse_args()
@@ -47,7 +47,7 @@ def parseArguments():
     cmd_args["workingDir"] = args.workingDir
     cmd_args["testRun"] = args.testRun
     cmd_args["qt_version"] = args.qtVersion
-    cmd_args["logSuffix"] = args.logSuffix
+    #cmd_args["logSuffix"] = args.logSuffix
     cmd_args["featureJSON"] = args.featureJSON
     cmd_args["buildCores"] = args.buildCores
     cmd_args["vsDevCmd"] = args.vsDevCmd
@@ -55,6 +55,11 @@ def parseArguments():
 parseArguments()
 # Set the output dir for result files.
 my_output_dir = cmd_args["workingDir"]
+
+def timestamp():
+    return '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
+
+process_start_time = timestamp()
 
 #shutil.rmtree(cmd_args["workingDir"] + cmd_args["qt_version"])
 
@@ -186,11 +191,11 @@ def submit_numstats(moduleName, failure_ratio, failure_count, sha1):
 
     requests.post("https://testresults.qt.io/influxdb/write?db=feature_system", auth=('feature_system_service', 'Yk2HxxKRm'), data=data.encode('utf-8'))
 
-log_suffix = cmd_args['logSuffix']
+log_suffix = "_" + process_start_time.replace(" ", "_").replace(":", ".")
 
 #### Selftest logic ####
 
-quick_test_run = cmd_args["testRun"]
+quick_test_run = True if (cmd_args["testRun"] == "True") else False
 test_feature_dict = {}
 
 if (cmd_args['featureJSON'] != ''):
@@ -376,6 +381,8 @@ def getFeaturesFromRepo(repo):
 
 if quick_test_run:
     repo_features = test_feature_dict
+    repo_features['qtbase'] = []
+
 else:
     for repo in sorted_repos:
         getFeaturesFromRepo(repo)
@@ -401,12 +408,10 @@ if(isWindows):
 else:
     configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-nomake", "tools", "-opensource", "-confirm-license" ]
 
-outfile = open(my_output_dir+'results'+log_suffix, 'a')
-errfile = open(my_output_dir+'errors'+log_suffix, 'a')
-warnfile = open(my_output_dir+'warnings'+log_suffix, 'a')
+outfile = open(my_output_dir+'results'+log_suffix+'.log', 'a')
+errfile = open(my_output_dir+'errors'+log_suffix+'.log', 'a')
+warnfile = open(my_output_dir+'warnings'+log_suffix+'.log', 'a')
 
-def timestamp():
-    return '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
 
 def clean_repos(repos_to_clean):
     for r in repos_to_clean:
@@ -518,7 +523,7 @@ for current_repo in sorted_repos:
                 print(timestamp(), "Building", r, "with", test_feature, file=outfile, flush=True)
                 print("Building", r, "...")
                 #"nmake", "-j", "8", "module-" + r
-                build_retc = subprocess.run([("c:\\JOM\\jom.exe" if isWindows else "make"), "-j",  cmd_args["buildCores"], "module-" + r],
+                build_retc = subprocess.run([("/JOM/jom.exe" if isWindows else "make"), "-j",  cmd_args["buildCores"], "module-" + r],
                                             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
                 print(timestamp(), 'Build result',
                       build_retc.returncode, file=outfile, flush=True)
