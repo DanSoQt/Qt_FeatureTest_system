@@ -5,19 +5,129 @@ import copy
 import sys
 import collections
 import platform
-
-import requests
 import time
 import os
 import json
+import shutil
 
+# --- dependency modules --- make sure to install these on the local system.
+import argparse
+import requests
 
 # --- Local modules
-
 import htmlwriter
 
+#This application is not object oriented and does not use the __init__ method.
 
-my_output_dir = "/mnt/c/Users/dasmith/Documents/test/"
+
+
+
+cmd_args = {}
+
+def parseArguments():
+    parser = argparse.ArgumentParser(description='Process platform, arch, and working Directory.')
+    parser.add_argument('--platform', dest='platform', action='store', default='UNKNOWN', required=True, help='The platform that will be running tests. For example: \'Ubuntu_16.04\' or \'Windows_10\'. If running in windows, you MUST include the text\'windows\' somewhere in this parameter value.')
+    parser.add_argument('--arch', dest='arch', action='store', default='x64', required=True, help='The processor architecture that will be running tests. Expected values are \'x86\', \'x64\', \'AArch_32\', \'AArch_64\'')
+    parser.add_argument('--workingDir', dest='workingDir', action='store', default='', required=True, help='Specify the working directory for the testing. Ensure that the user running tests has read/write access. Example: /home/feature-test/ or C:\\feature-test\\')
+    parser.add_argument('--testRun', dest='testRun', action='store', default=False, required=False, help='Setting this to True should run with a short test-set of features to build')
+    parser.add_argument('--qtVersion', dest='qtVersion', action='store', default='dev', required=False, help='Specify a particular branch to test. Defaults to \'dev\' if not set.')
+    parser.add_argument('--logSuffix', dest='logSuffix', action='store', default='.log', required=False, help='Specify a suffix or file extension for the log file. Default is .log if not set')
+    parser.add_argument('--featureJSON', dest='featureJSON', action='store', default='', required=False, help='Specify the absoulte or relative path to a json file containing a feature set to test. Default will scan the qt installation for features.')
+    parser.add_argument('--buildCores', dest='buildCores', action='store', default='2', required=False, help='Specify the number of CPU cores to use for building. Defaults to 2 as a safe value.')
+    parser.add_argument('--vsDevCmd', dest='vsDevCmd', action='store', default='C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Professional\\Common7\\Tools\\VsDevCmd.bat', required=False, help='Specify the location of the VsDevCmd.bat file for setting up the build environment on Windows.\nThis parameter is not required on linux and assumes that VS2017 is installed on windows if left blank.')
+
+    try:
+        args = parser.parse_args()
+    except Exception as e:
+        print(e)
+        exit
+    
+    cmd_args["platform"] = args.platform
+    cmd_args["arch"] = args.arch
+    cmd_args["workingDir"] = args.workingDir
+    cmd_args["testRun"] = args.testRun
+    cmd_args["qt_version"] = args.qtVersion
+    cmd_args["logSuffix"] = args.logSuffix
+    cmd_args["featureJSON"] = args.featureJSON
+    cmd_args["buildCores"] = args.buildCores
+    cmd_args["vsDevCmd"] = args.vsDevCmd
+
+parseArguments()
+# Set the output dir for result files.
+my_output_dir = cmd_args["workingDir"]
+
+#shutil.rmtree(cmd_args["workingDir"] + cmd_args["qt_version"])
+
+#If we're on Windows, set a flag and do some environment setup.
+isWindows = False
+
+if (cmd_args["platform"].lower().find('windows') > -1):
+    isWindows = True
+    #runs the vsDevCmd file from the visual studio installation
+    vars = subprocess.check_output([cmd_args["vsDevCmd"], '&&', 'set'], shell=True)
+
+    # splits the output of the batch file and saves PATH variables from the batch to the local os.environ
+    for var in vars.splitlines():
+        var = var.decode('cp1252')
+        k, _, v = map(str.strip, var.strip().partition('='))
+        if k.startswith('?'):
+            continue
+        os.environ[k] = v
+
+    os.environ["CL"]="/MP" #set multicore building
+    os.environ["PATH"]+=cmd_args["workingDir"].replace("/", "\\") + cmd_args["qt_version"] + "\\" # add the qt version we're working on to the windows PATH.
+
+# Checkout the branch and update it if it's already downloaded. Clone it and run init-repo on it if it's not available locally.
+def setup_qt_workspace():
+    if not os.path.exists(cmd_args["workingDir"]):
+        os.makedirs(cmd_args["workingDir"])
+
+    if os.path.exists(cmd_args["workingDir"] + cmd_args["qt_version"]):
+        #assume we have a version cloned already!
+        print(subprocess.run(["git", "checkout", cmd_args["qt_version"]], stdout=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"]).stdout)
+        print(subprocess.run(["git", "fetch", "--recurse-submodules=yes", "-v"], stdout=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"]).stdout)
+        print(subprocess.run(["git", "reset", "--hard", "origin/"+cmd_args["qt_version"]], stdout=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"]).stdout)
+        #print(subprocess.run(["git", "submodule", "foreach", "git", "submodule", "update"], stdout=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"]).stdout)
+        print(subprocess.run(["git", "clean", "-fdx"], stdout=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"]).stdout)
+    else:
+        attempts = 0
+        returncode = -1
+        while returncode !=0: # clone out the target branch to the working directory
+            proc = subprocess.run(["git", "clone", "-b", cmd_args["qt_version"], "--single-branch", 'https://code.qt.io/cgit/qt/qt5.git', cmd_args["qt_version"]], stdout=subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"])
+            print(proc.stdout, proc.stderr)
+            returncode = proc.returncode
+            attempts = attempts + 1
+            if attempts > 14:
+                attempts = 0
+                if (returncode !=0):
+                    raise Exception("Failed to clone the repository after 15 tries. Maybe there's something wrong with the endpoint or your network connection.")
+                break
+            if returncode!=0:
+                print("There was an error while trying to clone the repo. Try " + str(attempts) + "/15 max.  Retrying.")
+            
+        print(subprocess.run(["git", "checkout", cmd_args["qt_version"]], stdout=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"]).stdout)
+    
+    attempts = 0
+    returncode = -1
+    proc = None
+        
+        #This step likes to fail while cloning large data from the repo. Try it up to 15 times. The init-repo script should pick up where it left off each time.
+    while returncode != 0:
+        print("running the init-repo step.")
+        proc = subprocess.run(["perl", "init-repository", "-f"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
+        print("Finished the step or errored out. Printing results next...")
+        print(proc.stdout, proc.stderr)
+        returncode = proc.returncode
+        attempts = attempts + 1
+        if attempts > 14:
+            attempts = 0
+            if (returncode !=0):
+                raise Exception("Failed to initialize the branch repo. Maybe there's something wrong with the endpoint or your network connection. You can run the init-repository script yourself with perl /workingDirectory/qtVersion/init-repository -f")
+        if returncode!=0: print("There was an error while trying to initialize the repo. Try " + str(attempts) + "/15 max. Retrying.")    
+
+
+
+setup_qt_workspace()
 
 components_qtbase = [
     '-no-widgets',
@@ -27,7 +137,6 @@ components_qtbase = [
     '-no-opengl',
     '-no-cups',
     '-no-fontconfig',
-####    '-no-freetype',
     '-no-harfbuzz',
     '-no-ssl',
     '-no-xkbcommon',
@@ -35,9 +144,6 @@ components_qtbase = [
 ]
 
 connect_to_database = True
-
-#HOSTNAME="10.213.255.45"
-
 
 timestamp_nano = time.time() * 1e9
 
@@ -55,7 +161,7 @@ def submit_stats(moduleName, featureName, success, sha1):
     status = 'success' if success else 'failure'
     result = 0 if success else 1;
     prettyFeatureName = remove_prefix(featureName, '-no-feature-')
-    tags = ('machineName=' + platform.node(), 'platform=Ubuntu_16.04', 'arch=x64', 'module='+moduleName, 'status='+status, 'feature='+prettyFeatureName)
+    tags = ('machineName=' + platform.node(), 'platform=' + cmd_args['platform'], 'arch=' + cmd_args['arch'], 'module='+moduleName, 'status='+status, 'feature='+prettyFeatureName)
     fields = ('failure={:d}i'.format(result) , 'sha1="{}"'.format(sha1))
 
     data = '%s,%s %s %i' % (measurement, ','.join(tags), ','.join(fields), timestamp_nano)
@@ -63,18 +169,13 @@ def submit_stats(moduleName, featureName, success, sha1):
     print(data)
 
     requests.post("https://testresults.qt.io/influxdb/write?db=feature_system", auth=('feature_system_service', 'Yk2HxxKRm'), data=data.encode('utf-8'))
-    #requests.post("https://testresults.qt.io/influxdb/write?db=feature_system", data=data.encode('utf-8'))
-    pass
-
-
-
 
 def submit_numstats(moduleName, failure_ratio, failure_count, sha1):
     if not connect_to_database:
         return
     measurement = 'build_stats'
 
-    tags = ('platform=Ubuntu_16.04', 'module='+moduleName)
+    tags = ('platform=' + cmd_args["platform"], 'module=' + moduleName)
     fields = ('failurepercent={:f}'.format(failure_ratio*100) , 'failurecount={:d}'.format(failure_count), 'sha1="{}"'.format(sha1))
 
     ###timestamp_nano = timestamp_secs * 1e9
@@ -84,35 +185,34 @@ def submit_numstats(moduleName, failure_ratio, failure_count, sha1):
     print(data)
 
     requests.post("https://testresults.qt.io/influxdb/write?db=feature_system", auth=('feature_system_service', 'Yk2HxxKRm'), data=data.encode('utf-8'))
-    #requests.post("http://10.213.255.45:8086/write?db=feature_system", auth=('feature_system_user', 'Yk2HxxKRm'), data=data.encode('utf-8'))
 
-try:
-    log_suffix = '_'+sys.argv[1]
-except IndexError:
-    log_suffix = '_log'
-
-
+log_suffix = cmd_args['logSuffix']
 
 #### Selftest logic ####
 
-quick_test_run = False
+quick_test_run = cmd_args["testRun"]
 test_feature_dict = {}
-try:
-    json_feature_arg = sys.argv[2]
-    test_feature_dict = json.loads(json_feature_arg)
-    repo_list = list(test_feature_dict.keys())
-    print("Running full test from json...")
-except IndexError as e:
-    # normal run: autodetect repos and features
-    repo_list = []
-    print("Exception when loading json features: ")
+
+if (cmd_args['featureJSON'] != ''):
+    try:
+        json_feature_arg = cmd_args['featureJSON']
+        test_feature_dict = json.loads(json_feature_arg)
+        repo_list = list(test_feature_dict.keys())
+        print("Running full test from json...")
+    except IndexError as e:
+        # normal run: autodetect repos and features
+        print("Exception when loading json features: ")
+        repo_list = []
+        pass
+
+    else:
+        # test run: use the specified repos and features
+        print("Running as a quick test run...")
+        quick_test_run = True
+        components_qtbase = []
 
 else:
-    # test run: use the specified repos and features
-    print("Running as a quick test run...")
-    quick_test_run = True
-    components_qtbase = []
-
+    repo_list = []
 
 
 
@@ -124,20 +224,18 @@ else:
 
 if not repo_list:
     print("Getting the repo list.")
-    repo_run = subprocess.run(["git", "submodule", "foreach", "-q", r"echo $path"], stdout=subprocess.PIPE, universal_newlines=True, cwd='/mnt/c/git-work/qt5_work')
-
-    repo_list = repo_run.stdout.splitlines();
+    repo_run = subprocess.run(["git", "submodule", "foreach", "-q", r"echo $path"], stdout=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
+    repo_list = repo_run.stdout.splitlines()
 
 
 print('Repositories:', repo_list)
 print('-------------------------------------------')
 
-
 repo_sha1s = {}
 
 def get_sha1(repo):
     print("Directory is currently: " + repo)
-    sha1_run =  subprocess.run(["git", "rev-parse", "HEAD"], cwd='/mnt/c/git-work/qt5_work/' + repo, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
+    sha1_run =  subprocess.run(["git", "rev-parse", "HEAD"], cwd=cmd_args["workingDir"] + cmd_args["qt_version"] + "/"+ repo, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
     repo_sha1s[repo] =  sha1_run.stdout.splitlines()[0]
 
 
@@ -158,8 +256,8 @@ def add_dependency(parent, child):
 
 
 current_sub = 'UNKNOWN'
-#opt_deps = dict()
-with open('/mnt/c/git-work/qt5_work/.gitmodules') as f:
+
+with open(cmd_args["workingDir"] + cmd_args["qt_version"] + "/.gitmodules") as f:
     for line in f:
         match = re.search(r'^\[submodule "(.*)"\]', line)
         if match:
@@ -176,12 +274,6 @@ with open('/mnt/c/git-work/qt5_work/.gitmodules') as f:
             for dep in match.group(1).split(' '):
                 add_dependency(current_sub, dep)
             continue
-
-#print('-------------------------------------------')
-
-#print(dependencies)
-#print('-------------------------------------------')
-
 
 def deps_recursive(repo):
     retval = set()
@@ -258,7 +350,7 @@ def getFeaturesFromRepo(repo):
     configureFound = False
     #return #remove this to reenable full test.
     try:
-        for root, dirs, files in os.walk("/mnt/c/git-work/qt5_work/" + repo):
+        for root, dirs, files in os.walk(cmd_args["workingDir"] + cmd_args["qt_version"] + "/" + repo):
             for file in files:
                 if file == 'configure.json':
                     configureFound = True
@@ -304,14 +396,14 @@ print("------------------------------------------")
 
 ###### "-developer-build", does not play well with syncqt
 
-configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-nomake", "tools", "-opensource", "-confirm-license" ]
+if(isWindows):
+    configuretemplate = [ "configure.bat", "-recheck-all", "-no-pch", "-release", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-nomake", "tools", "-opensource", "-confirm-license"]
+else:
+    configuretemplate = [ "./configure", "-recheck-all", "-no-pch", "-release", "-no-warnings-are-errors", "-nomake", "examples", "-nomake", "tests", "-nomake", "tools", "-opensource", "-confirm-license" ]
 
 outfile = open(my_output_dir+'results'+log_suffix, 'a')
 errfile = open(my_output_dir+'errors'+log_suffix, 'a')
 warnfile = open(my_output_dir+'warnings'+log_suffix, 'a')
-
-
-#./configure -recheck-all -no-pch -release -developer-build -no-warnings-are-errors -nomake examples -nomake tests -opensource -confirm-license -no-feature-wheelevent
 
 def timestamp():
     return '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
@@ -319,7 +411,8 @@ def timestamp():
 def clean_repos(repos_to_clean):
     for r in repos_to_clean:
         print("cleaning", r)
-        subprocess.run(["git", "clean", "-fdx"], cwd='/mnt/c/git-work/qt5_work/' + r, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["git", "clean", "-fdx"], cwd=cmd_args["workingDir"] + cmd_args["qt_version"] + "/" + r, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 
 def configure_qt(opt, repo = ''):
     print(timestamp(), "Configuring", opt, file=outfile, flush=True)
@@ -328,14 +421,19 @@ def configure_qt(opt, repo = ''):
         configurecmd.append(opt)
 
     print("configuring", opt)
-    ### TODO: capture stderr
-    conf_retc = subprocess.run(configurecmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd='/mnt/c/git-work/qt5_work/')
+    print("trying to run:" + cmd_args["workingDir"] + cmd_args["qt_version"] + "/" + str(configurecmd))
+    conf_retc = subprocess.run(configurecmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
     print(timestamp(), 'Configure result', conf_retc.returncode,  file=outfile, flush=True)
     print(timestamp(), 'Configure result: ', conf_retc.returncode)
+    print(conf_retc.stdout, "\n\n", conf_retc.stderr)
     if conf_retc.returncode != 0:
         print("Configure error:", opt)
         print("Configure error:", opt, file=errfile, flush=True)
     return conf_retc.returncode == 0
+
+#########################################################################################################################################################################
+#------------------------------------------------- Make this platform independent since Make won't be used on Windows --------------------------------------------------#
+#########################################################################################################################################################################
 
 def report_errors(featurename, modulename, log):
     print(log)
@@ -391,7 +489,7 @@ databaseError = False
 
 # start out clean
 print("cleaning all")
-subprocess.run(["git", "submodule", "foreach", " git", "clean", "-fdx"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd='/mnt/c/git-work/qt5_work')
+subprocess.run(["git", "submodule", "foreach", " git", "clean", "-fdx"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
 
 # test all features connected to each repo
 
@@ -419,8 +517,9 @@ for current_repo in sorted_repos:
                 print("Repo was in the list to test. Attempting to build...")
                 print(timestamp(), "Building", r, "with", test_feature, file=outfile, flush=True)
                 print("Building", r, "...")
-                build_retc = subprocess.run(["make", "-j", "8", "module-" + r],
-                                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True, cwd='/mnt/c/git-work/qt5_work/')
+                #"nmake", "-j", "8", "module-" + r
+                build_retc = subprocess.run([("c:\\JOM\\jom.exe" if isWindows else "make"), "-j",  cmd_args["buildCores"], "module-" + r],
+                                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
                 print(timestamp(), 'Build result',
                       build_retc.returncode, file=outfile, flush=True)
                 print(build_retc.check_returncode)
@@ -449,11 +548,11 @@ for current_repo in sorted_repos:
     #clean all rdeps before testing next repo
     clean_repos(repos_to_test)
 
-
-
+    
 #------------------------
 # End of test run
 #------------------------
+
 
 
 htmlwriter.registerStats(buildcount=total_build_count)
