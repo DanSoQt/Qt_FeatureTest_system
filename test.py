@@ -427,7 +427,7 @@ def configure_qt(opt, repo = ''):
 
     print("configuring", opt)
     print("trying to run:" + cmd_args["workingDir"] + cmd_args["qt_version"] + "/" + str(configurecmd))
-    conf_retc = subprocess.run(configurecmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
+    conf_retc = subprocess.run(configurecmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=cmd_args["workingDir"] + cmd_args["qt_version"], shell=(True if isWindows else False))
     print(timestamp(), 'Configure result', conf_retc.returncode,  file=outfile, flush=True)
     print(timestamp(), 'Configure result: ', conf_retc.returncode)
     print(conf_retc.stdout, "\n\n", conf_retc.stderr)
@@ -522,9 +522,12 @@ for current_repo in sorted_repos:
                 print("Repo was in the list to test. Attempting to build...")
                 print(timestamp(), "Building", r, "with", test_feature, file=outfile, flush=True)
                 print("Building", r, "...")
-                #"nmake", "-j", "8", "module-" + r
-                build_retc = subprocess.run([("/JOM/jom.exe" if isWindows else "make"), "-j",  cmd_args["buildCores"], "module-" + r],
-                                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
+                if (isWindows):
+                    build_retc = subprocess.run([os.getcwd() + "\\JOM\\jom.exe", "-j",  cmd_args["buildCores"], "module-" + r],
+                                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"], shell=True)
+                else:
+                    build_retc = subprocess.run(["make", "-j",  cmd_args["buildCores"], "module-" + r],
+                                                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
                 print(timestamp(), 'Build result',
                       build_retc.returncode, file=outfile, flush=True)
                 print(build_retc.check_returncode)
