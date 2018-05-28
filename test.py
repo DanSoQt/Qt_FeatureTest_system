@@ -69,7 +69,7 @@ isWindows = False
 if (cmd_args["platform"].lower().find('windows') > -1):
     isWindows = True
     #runs the vsDevCmd file from the visual studio installation
-    vars = subprocess.check_output([cmd_args["vsDevCmd"], '&&', 'set'], shell=True)
+    vars = subprocess.check_output([cmd_args["vsDevCmd"], '&&', 'set'])
 
     # splits the output of the batch file and saves PATH variables from the batch to the local os.environ
     for var in vars.splitlines():
@@ -427,7 +427,7 @@ def configure_qt(opt, repo = ''):
 
     print("configuring", opt)
     print("trying to run:" + cmd_args["workingDir"] + cmd_args["qt_version"] + "/" + str(configurecmd))
-    conf_retc = subprocess.run(configurecmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=cmd_args["workingDir"] + cmd_args["qt_version"], shell=(True if isWindows else False))
+    conf_retc = subprocess.run(configurecmd, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
     print(timestamp(), 'Configure result', conf_retc.returncode,  file=outfile, flush=True)
     print(timestamp(), 'Configure result: ', conf_retc.returncode)
     print(conf_retc.stdout, "\n\n", conf_retc.stderr)
@@ -524,7 +524,7 @@ for current_repo in sorted_repos:
                 print("Building", r, "...")
                 if (isWindows):
                     build_retc = subprocess.run([os.getcwd() + "\\JOM\\jom.exe", "-j",  cmd_args["buildCores"], "module-" + r],
-                                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"], shell=True)
+                                               stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
                 else:
                     build_retc = subprocess.run(["make", "-j",  cmd_args["buildCores"], "module-" + r],
                                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, universal_newlines=True, cwd=cmd_args["workingDir"] + cmd_args["qt_version"])
